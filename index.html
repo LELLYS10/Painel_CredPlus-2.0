@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAINEL CREDPLUS 1.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-body: #0a0f1e; --surface: rgba(30, 41, 59, 0.6); --card-bg: #1e293b;
+            --accent: #22c55e;
+            --text-main: #f1f5f9; --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.08);
+
+            /* PALETA ÚNICA */
+            --clr-leillys: #10b981; --clr-jailton: #ffffff; --clr-ricardo: #f97316;
+            --clr-mangu: #1d4ed8; --clr-matheus: #a855f7; --clr-sanny: #ec4899;
+            --clr-marcos: #0ea5e9; --clr-jean: #facc15;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; padding: 1.5rem; }
+        .app-container { max-width: 1400px; margin: 0 auto; }
+
+        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 2rem; }
+        .brand { display: flex; align-items: center; gap: 12px; font-family: 'Outfit'; font-size: 1.8rem; }
+        .brand span { color: var(--accent); font-weight: 800; }
+
+        .btn { border: none; padding: 0.85rem 1.6rem; border-radius: 14px; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+        .btn-primary { background: var(--accent); color: #0a0f1e; box-shadow: 0 10px 25px -10px var(--accent); }
+        .btn-icon { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: var(--text-muted); padding: 9px; border-radius: 10px; }
+
+        /* Navigation */
+        .dashboard-nav { display: flex; gap: 1rem; margin-bottom: 1.2rem; overflow-x: auto; padding-bottom: 8px; }
+        .nav-link { padding: 0.8rem 1.6rem; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; font-size: 0.85rem; font-weight: 700; white-space: nowrap; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
+        .nav-link.active { background: var(--accent); color: #0a0f1e; border-color: var(--accent); }
+
+        /* Sub-Nav Bars */
+        .sub-nav { display: flex; gap: 0.6rem; margin-bottom: 2rem; background: rgba(0,0,0,0.25); padding: 10px; border-radius: 18px; border: 1px solid var(--border); flex-wrap: wrap; }
+        .sub-btn { padding: 10px 22px; border-radius: 14px; font-size: 0.75rem; font-weight: 700; cursor: pointer; border: 1px solid transparent; color: var(--text-muted); transition: 0.3s; display: flex; align-items: center; gap: 8px; }
+        .sub-btn.active { background: var(--surface); color: white; border-color: var(--border); }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.3rem; margin-bottom: 2.5rem; }
+        .stat-card { background: var(--surface); backdrop-filter: blur(20px); border: 1px solid var(--border); padding: 1.8rem; border-radius: 26px; }
+        .stat-label { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 10px; display: block; font-weight: 600; }
+        .stat-value { font-size: 2.1rem; font-family: 'Outfit'; font-weight: 700; }
+
+        /* Table Area */
+        .table-area { background: var(--card-bg); border-radius: 30px; border: 1px solid var(--border); padding: 1.8rem; box-shadow: 0 30px 80px rgba(0,0,0,0.6); }
+        .search-area { margin-bottom: 1.5rem; display: flex; gap: 1rem; }
+        .search-area input { flex: 1; max-width: 450px; padding: 1rem; border-radius: 14px; border: 1px solid var(--border); background: rgba(0,0,0,0.3); color: white; outline: none; }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+        th { padding: 1.2rem 1rem; color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; text-align: left; }
+        tbody tr { background: rgba(255,255,255,0.02); border-radius: 16px; transition: 0.3s; }
+        td { padding: 1.4rem 1rem; }
+        td:first-child { border-radius: 16px 0 0 16px; border-left: 6px solid transparent; }
+        td:last-child { border-radius: 0 16px 16px 0; }
+
+        .label-gp { font-size: 0.6rem; padding: 3px 6px; background: rgba(5,7,12,0.8); border-radius: 5px; font-weight: 900; margin-right: 12px; border: 1px solid var(--border); }
+        .st-badge { padding: 6px 16px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; border: 1px solid transparent; }
+        
+        /* Status Colors */
+        .bg-red { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border-color: #ef4444; }
+        .bg-yellow { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border-color: #f59e0b; }
+        .bg-blue { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border-color: #3b82f6; }
+        .bg-green { background: rgba(34, 197, 94, 0.2); color: #86efac; border-color: #22c55e; }
+
+        /* Modal */
+        .modal { position: fixed; inset: 0; background: rgba(5,7,12,0.96); backdrop-filter: blur(15px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 1rem; }
+        .modal-body { background: #1e293b; padding: 3.5rem; border-radius: 36px; width: 100%; max-width: 750px; border: 1px solid var(--border); box-shadow: 0 100px 200px rgba(0,0,0,1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+        label { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 10px; display: block; }
+        input, select { width: 100%; padding: 1.1rem; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 14px; outline: none; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <div class="brand"><i data-lucide="shield-check" color="#22c55e" size="42"></i> PAINEL <span>CREDPLUS 1.0</span></div>
+        <button class="btn btn-primary" onclick="showForm()"><i data-lucide="plus-square"></i> NOVO LANÇAMENTO</button>
+    </header>
+
+    <nav class="dashboard-nav">
+        <div class="nav-link active" onclick="switchSys('ADM')"><i data-lucide="layout-grid" size="18"></i> 1. VISÃO GERAL</div>
+        <div class="nav-link" onclick="switchSys('GRUPO ESPECIAL')"><i data-lucide="star" size="18"></i> 2. GRUPO ESPECIAL</div>
+        <div class="nav-link" onclick="switchSys('GRUPO A')"><i data-lucide="users" size="18"></i> 3. GRUPO A</div>
+        <div class="nav-link" onclick="switchSys('GRUPO B')"><i data-lucide="users-round" size="18"></i> 4. GRUPO B</div>
+    </nav>
+
+    <!-- Sub-Dashboards -->
+    <div id="subDashE" class="sub-nav" style="display: none;">
+        <div class="sub-btn active" onclick="setSub('E', 'TODOS')">DASHBOARD GERAL</div>
+        <div class="sub-btn" id="sub-lel" onclick="setSub('E', 'LELLYS FLÁVIO')" style="color: var(--clr-leillys)">LELLYS FLÁVIO</div>
+    </div>
+
+    <div id="subDashA" class="sub-nav" style="display: none;">
+        <div class="sub-btn active" onclick="setSub('A', 'TODOS')">DASHBOARD GERAL A</div>
+        <div class="sub-btn" onclick="setSub('A', 'JAILTON')">JAILTON</div>
+        <div class="sub-btn" onclick="setSub('A', 'RICARDO')">RICARDO</div>
+        <div class="sub-btn" onclick="setSub('A', 'MANGU')">MANGU</div>
+        <div class="sub-btn" onclick="setSub('A', 'MATHEUS TUK')">MATHEUS TUK</div>
+    </div>
+
+    <div id="subDashB" class="sub-nav" style="display: none;">
+        <div class="sub-btn active" onclick="setSub('B', 'TODOS')">DASHBOARD GERAL B</div>
+        <div class="sub-btn" onclick="setSub('B', 'SANNY')">SANNY</div>
+        <div class="sub-btn" onclick="setSub('B', 'MARCOS')">MARCOS</div>
+        <div class="sub-btn" onclick="setSub('B', 'JEAN')">JEAN</div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card" id="cardComissao" style="display: none;"><span class="stat-label">Minha Comissão</span><div class="stat-value" id="tot-comis" style="color: var(--clr-leillys)">R$ 0,00</div></div>
+        <div class="stat-card"><span class="stat-label">Carteira em Aberto</span><div class="stat-value" id="tot-cap">R$ 0,00</div></div>
+        <div class="stat-card"><span class="stat-label">Juros à Receber Total</span><div class="stat-value" id="tot-jur" style="color: var(--accent)">R$ 0,00</div></div>
+        <div class="stat-card"><span class="stat-label">Clientes Ativos</span><div class="stat-value" id="tot-cli">0</div></div>
+    </div>
+
+    <div class="table-area">
+        <div class="search-area"><input type="text" id="srch" placeholder="🔎 Pesquisar cliente..." onkeyup="refreshUI()"></div>
+        <table>
+            <thead>
+                <tr>
+                    <th width="35%">CLIENTE / GESTOR RESPONSÁVEL</th>
+                    <th>VALOR</th>
+                    <th>JUROS</th>
+                    <th>VENCIMENTO</th>
+                    <th>SITUAÇÃO</th>
+                    <th>AÇÕES</th>
+                </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal" id="formModal">
+    <div class="modal-body">
+        <h2 id="modalTitle" style="margin-bottom: 2.5rem; font-family: 'Outfit';">Gerenciar Contrato</h2>
+        <form onsubmit="handleSave(event)">
+            <input type="hidden" id="eID">
+            <div style="margin-bottom: 1.5rem"><label>NOME DO CLIENTE</label><input type="text" id="r-name" required></div>
+            <div class="form-row">
+                <div><label>VALOR EMPRÉSTIMO</label><input type="number" step="any" id="r-val" required></div>
+                <div><label>% JUROS AO MÊS</label><input type="number" step="0.1" id="r-perc" value="8" required></div>
+            </div>
+            <div class="form-row">
+                <div><label>DATA DO EMPRÉSTIMO</label><input type="date" id="r-date-loan" required></div>
+                <div><label>DATA PAGAMENTO JUROS</label><input type="date" id="r-date-pay" required></div>
+            </div>
+            <div class="form-row">
+                <div><label>VINCULAR AO GRUPO</label>
+                    <select id="r-group" onchange="updTeam()">
+                        <option value="GRUPO ESPECIAL">GRUPO ESPECIAL</option>
+                        <option value="GRUPO A">GRUPO A</option>
+                        <option value="GRUPO B">GRUPO B</option>
+                    </select>
+                </div>
+                <div><label>GESTOR RESPONSÁVEL</label><select id="r-sub"></select></div>
+            </div>
+            <div class="form-row" id="rowComis" style="display: none;">
+                <div style="grid-column: span 2;"><label>% COMISSÃO DO GESTOR (OPCIONAL)</label><input type="number" step="0.1" id="r-comis-perc" value="0"></div>
+            </div>
+            <div style="display: flex; gap: 1.5rem; margin-top: 1.5rem;">
+                <button type="button" class="btn" onclick="hideForm()" style="flex:1; border:1px solid var(--border)">SAIR</button>
+                <button type="submit" class="btn btn-primary" style="flex:2">CONFIRMAR E SALVAR</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+    let view = 'ADM', sub = 'TODOS';
+    let db = JSON.parse(localStorage.getItem('credplus_v1_sync')) || [];
+
+    const clrs = {
+        "LELLYS FLÁVIO": "#10b981", "JAILTON": "#ffffff", "RICARDO": "#f97316", "MANGU": "#1d4ed8",
+        "MATHEUS TUK": "#a855f7", "SANNY": "#ec4899", "MARCOS": "#0ea5e9", "JEAN": "#fbbf24"
+    };
+
+    function currency(v) {
+        return "R$ " + (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function switchSys(v) {
+        view = v; sub = 'TODOS';
+        document.querySelectorAll('.nav-link').forEach(l => l.innerText.includes(v) ? l.classList.add('active') : l.classList.remove('active'));
+        document.querySelectorAll('.sub-nav').forEach(n => n.style.display = 'none');
+        if(v === 'GRUPO ESPECIAL') document.getElementById('subDashE').style.display = 'flex';
+        if(v === 'GRUPO A') document.getElementById('subDashA').style.display = 'flex';
+        if(v === 'GRUPO B') document.getElementById('subDashB').style.display = 'flex';
+        refreshUI();
+    }
+
+    function setSub(gp, s) { 
+        sub = s;
+        const sel = gp === 'E' ? '#subDashE .sub-btn' : (gp === 'A' ? '#subDashA .sub-btn' : '#subDashB .sub-btn');
+        document.querySelectorAll(sel).forEach(b => {
+            const bTxt = b.innerText.toUpperCase();
+            const isMatch = s === 'TODOS' ? bTxt.includes('GERAL') : bTxt === s.toUpperCase();
+            if(isMatch) b.classList.add('active'); else b.classList.remove('active');
+        });
+        refreshUI();
+    }
+
+    function updTeam() {
+        const gp = document.getElementById('r-group').value;
+        const subSel = document.getElementById('r-sub');
+        subSel.innerHTML = '';
+        const teams = { 
+            "GRUPO ESPECIAL": ["LELLYS FLÁVIO"], 
+            "GRUPO A": ["JAILTON", "RICARDO", "MANGU", "MATHEUS TUK"], 
+            "GRUPO B": ["SANNY", "MARCOS", "JEAN"] 
+        };
+        const list = teams[gp] || [];
+        list.forEach(t => subSel.add(new Option(t, t)));
+        document.getElementById('rowComis').style.display = gp === 'GRUPO B' ? 'grid' : 'none';
+    }
+
+    function refreshUI() {
+        const qS = document.getElementById('srch').value.toUpperCase();
+        const tbody = document.getElementById('rows'); tbody.innerHTML = '';
+        let cT = 0, jT = 0, clT = 0, comT = 0;
+        const today = new Date(); today.setHours(0,0,0,0);
+        const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+
+        const isB = ['SANNY', 'MARCOS', 'JEAN'].includes(sub);
+        document.getElementById('cardComissao').style.display = isB ? 'block' : 'none';
+
+        // FILTRO DE SEGURANÇA MÁXIMA
+        const filtered = db.filter(c => {
+            const baseView = view.toUpperCase();
+            const itemGroup = (c.group || "").toUpperCase();
+            const itemSub = (c.sub || "").toUpperCase();
+            const filterSub = sub.toUpperCase();
+
+            const vMatch = (baseView === 'ADM' || itemGroup === baseView);
+            const sMatch = (filterSub === 'TODOS' || itemSub === filterSub);
+            const nMatch = (c.name || "").toUpperCase().includes(qS);
+
+            return vMatch && sMatch && nMatch;
+        });
+
+        filtered.forEach(c => {
+            const pD = new Date(c.datePay); pD.setHours(0,0,0,0);
+            const valJ = (c.val || 0) * (((c.perc || 8)) / 100);
+            
+            let bC = "", bText = "";
+            if (c.status === "PAGO") { bC = "bg-green"; bText = "PAGO"; }
+            else if (pD.getTime() === today.getTime()) { bC = "bg-blue"; bText = "HOJE"; }
+            else if (pD.getTime() === tomorrow.getTime()) { bC = "bg-yellow"; bText = "AMANHÃ"; }
+            else if (pD < today) { bC = "bg-red"; bText = "VENCIDO"; }
+            else { bC = "bg-blue"; bText = "EM DIA"; }
+
+            if(c.status !== "PAGO") { 
+                cT += (c.val || 0); 
+                jT += valJ; 
+                if(isB) comT += (valJ * ((c.comisPerc || 0) / 100));
+            }
+            clT++;
+
+            const color = clrs[c.sub] || "#94a3b8";
+            let gT = view === 'ADM' ? `<span class="label-gp" style="color:${color}">${c.group === 'GRUPO ESPECIAL' ? 'E' : (c.group === 'GRUPO A' ? 'A' : 'B')}</span>` : "";
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="border-left-color: ${color}">
+                    <div style="display:flex; align-items:center;">
+                        ${gT}
+                        <div><div style="font-weight:700; color:${color}; font-size:1.15rem;">${c.name}</div><div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">GEST: ${c.sub} (${c.perc || 8}%) | EMP: ${c.dateLoan.split('-').reverse().join('/')}</div></div>
+                    </div>
+                </td>
+                <td style="font-weight:700">${currency(c.val)}</td>
+                <td style="color:${color}; font-weight:800">${currency(valJ)}</td>
+                <td>${c.datePay.split('-').reverse().join('/')}</td>
+                <td><span class="st-badge ${bC}">${bText}</span></td>
+                <td><div style="display:flex; gap:10px;">
+                    <button class="btn-icon" onclick="markPaid(${c.id})"><i data-lucide="check" size="20" color="${c.status==='PAGO'?'#22c55e':'#94a3b8'}"></i></button>
+                    <button class="btn-icon" onclick="showForm(${c.id})"><i data-lucide="edit-2" size="20"></i></button>
+                </div></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('tot-cap').innerText = currency(cT);
+        document.getElementById('tot-jur').innerText = currency(jT);
+        document.getElementById('tot-cli').innerText = clT;
+        document.getElementById('tot-comis').innerText = currency(comT);
+        lucide.createIcons();
+    }
+
+    function showForm(id = null) {
+        if(id) {
+            const c = db.find(x => x.id == id);
+            document.getElementById('eID').value = c.id;
+            document.getElementById('r-name').value = c.name;
+            document.getElementById('r-val').value = c.val;
+            document.getElementById('r-perc').value = c.perc || 8;
+            document.getElementById('r-comis-perc').value = c.comisPerc || 0;
+            document.getElementById('r-date-loan').value = c.dateLoan;
+            document.getElementById('r-date-pay').value = c.datePay;
+            document.getElementById('r-group').value = c.group;
+            updTeam();
+            document.getElementById('r-sub').value = c.sub;
+            document.getElementById('modalTitle').innerText = "Editar Cadastro";
+        } else {
+            document.getElementById('eID').value = "";
+            document.getElementById('r-name').value = "";
+            document.getElementById('r-val').value = "";
+            document.getElementById('r-perc').value = 8;
+            document.getElementById('r-comis-perc').value = 0;
+            document.getElementById('r-date-loan').value = "";
+            document.getElementById('r-date-pay').value = "";
+            document.getElementById('r-group').value = (view === 'ADM' || view === 'Visão Geral') ? 'GRUPO ESPECIAL' : view;
+            updTeam();
+            document.getElementById('modalTitle').innerText = "Novo Contrato";
+        }
+        document.getElementById('formModal').style.display = 'flex';
+    }
+
+    function hideForm() { document.getElementById('formModal').style.display = 'none'; }
+
+    function handleSave(e) {
+        e.preventDefault();
+        const id = document.getElementById('eID').value;
+        const d = { 
+            name: document.getElementById('r-name').value.toUpperCase(), 
+            val: parseFloat(document.getElementById('r-val').value) || 0, 
+            perc: parseFloat(document.getElementById('r-perc').value) || 0, 
+            comisPerc: parseFloat(document.getElementById('r-comis-perc').value || 0), 
+            dateLoan: document.getElementById('r-date-loan').value, 
+            datePay: document.getElementById('r-date-pay').value, 
+            group: document.getElementById('r-group').value, 
+            sub: document.getElementById('r-sub').value, 
+            status: "PENDENTE" 
+        };
+        if(id) db = db.map(x => x.id == id ? {...x, ...d} : x);
+        else db.push({id: Date.now(), ...d});
+        localStorage.setItem('credplus_v1_sync', JSON.stringify(db));
+        hideForm(); refreshUI();
+    }
+
+    function markPaid(id) {
+        db = db.map(c => c.id == id ? {...c, status: c.status === "PAGO" ? "PENDENTE" : "PAGO"} : c);
+        localStorage.setItem('credplus_v1_sync', JSON.stringify(db));
+        refreshUI();
+    }
+
+    refreshUI();
+</script>
+</body>
+</html>
