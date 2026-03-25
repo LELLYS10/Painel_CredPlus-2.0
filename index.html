@@ -29,7 +29,7 @@
 
         .btn { border: none; padding: 0.85rem 1.6rem; border-radius: 14px; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
         .btn-primary { background: var(--accent); color: #0a0f1e; box-shadow: 0 10px 25px -10px var(--accent); }
-        .btn-icon { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: var(--text-muted); padding: 9px; border-radius: 10px; }
+        .btn-icon { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: var(--text-muted); padding: 9px; border-radius: 10px; cursor: pointer; }
 
         /* Navigation */
         .dashboard-nav { display: flex; gap: 1rem; margin-bottom: 1.2rem; overflow-x: auto; padding-bottom: 8px; }
@@ -68,6 +68,9 @@
         .bg-blue { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border-color: #3b82f6; }
         .bg-green { background: rgba(34, 197, 94, 0.2); color: #86efac; border-color: #22c55e; }
 
+        /* Status bar */
+        #statusBar { font-size: 0.7rem; color: var(--text-muted); padding: 6px 14px; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px solid var(--border); margin-bottom: 12px; display: inline-block; }
+
         /* Modal */
         .modal { position: fixed; inset: 0; background: rgba(5,7,12,0.96); backdrop-filter: blur(15px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 1rem; }
         .modal-body { background: #1e293b; padding: 3.5rem; border-radius: 36px; width: 100%; max-width: 750px; border: 1px solid var(--border); box-shadow: 0 100px 200px rgba(0,0,0,1); }
@@ -84,11 +87,13 @@
         <button class="btn btn-primary" onclick="showForm()"><i data-lucide="plus-square"></i> NOVO LANÇAMENTO</button>
     </header>
 
+    <span id="statusBar">⏳ Carregando sincronização...</span>
+
     <nav class="dashboard-nav">
-        <div class="nav-link active" onclick="switchSys('ADM')"><i data-lucide="layout-grid" size="18"></i> 1. VISÃO GERAL</div>
-        <div class="nav-link" onclick="switchSys('GRUPO ESPECIAL')"><i data-lucide="star" size="18"></i> 2. GRUPO ESPECIAL</div>
-        <div class="nav-link" onclick="switchSys('GRUPO A')"><i data-lucide="users" size="18"></i> 3. GRUPO A</div>
-        <div class="nav-link" onclick="switchSys('GRUPO B')"><i data-lucide="users-round" size="18"></i> 4. GRUPO B</div>
+        <div class="nav-link active" id="nav-ADM" onclick="switchSys('ADM')"><i data-lucide="layout-grid" size="18"></i> 1. VISÃO GERAL</div>
+        <div class="nav-link" id="nav-GRUPO ESPECIAL" onclick="switchSys('GRUPO ESPECIAL')"><i data-lucide="star" size="18"></i> 2. GRUPO ESPECIAL</div>
+        <div class="nav-link" id="nav-GRUPO A" onclick="switchSys('GRUPO A')"><i data-lucide="users" size="18"></i> 3. GRUPO A</div>
+        <div class="nav-link" id="nav-GRUPO B" onclick="switchSys('GRUPO B')"><i data-lucide="users-round" size="18"></i> 4. GRUPO B</div>
     </nav>
 
     <!-- Sub-Dashboards -->
@@ -172,220 +177,270 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Supabase UMD build (versão que funciona em qualquer browser sem módulos) -->
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
+    // ============================================================
+    // ESTADO GLOBAL
+    // ============================================================
+    var currentView = 'ADM';
+    var currentSub  = 'TODOS';
+    var db = [];
+
+    // Carregar dados locais imediatamente para os botões funcionarem
+    try { db = JSON.parse(localStorage.getItem('credplus_v1_sync') || '[]'); } catch(e) {}
+
+    // ============================================================
+    // INICIALIZA ÍCONES (independente do Supabase)
+    // ============================================================
     lucide.createIcons();
-    let view = 'ADM', sub = 'TODOS';
-    let db = [];
 
-    // ====== INTEGRAÇÃO SUPABASE ======
-    const supabaseUrl = 'https://acvujcnfkeptjclnzyqq.supabase.co';
-    const supabaseKey = 'sb_publishable_ayU1lBrhxBemuQcATCR8Zg_QlipJZxD';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    // ============================================================
+    // CORES DOS GESTORES
+    // ============================================================
+    var clrs = {
+        "LELLYS FLÁVIO": "#10b981",
+        "JAILTON":        "#ffffff",
+        "RICARDO":        "#f97316",
+        "MANGU":          "#1d4ed8",
+        "MATHEUS TUK":    "#a855f7",
+        "SANNY":          "#ec4899",
+        "MARCOS":         "#0ea5e9",
+        "JEAN":           "#fbbf24"
+    };
 
-    async function carregarDadosDaNuvem() {
+    var EQUIPES = {
+        "GRUPO ESPECIAL": ["LELLYS FLÁVIO"],
+        "GRUPO A":        ["JAILTON", "RICARDO", "MANGU", "MATHEUS TUK"],
+        "GRUPO B":        ["SANNY", "MARCOS", "JEAN"]
+    };
+
+    // ============================================================
+    // SUPABASE — inicializa em paralelo, nunca bloqueia a UI
+    // ============================================================
+    var sbClient = null;
+    var SUPABASE_URL = 'https://acvujcnfkeptjclnzyqq.supabase.co';
+    var SUPABASE_KEY = 'sb_publishable_ayU1lBrhxBemuQcATCR8Zg_QlipJZxD';
+
+    function inicializarSupabase() {
         try {
-            // Puxa as tabelas OFICIAIS do seu App X3
-            const { data: clients } = await supabase.from('clients').select('*');
-            const { data: groups } = await supabase.from('groups').select('*');
+            // O CDN UMD v2 expõe o objeto como window.supabase
+            if (window.supabase && typeof window.supabase.createClient === 'function') {
+                sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                document.getElementById('statusBar').innerText = '🔄 Sincronizando com a nuvem...';
+                carregarDaNuvem();
+            } else {
+                document.getElementById('statusBar').innerText = '📴 Modo offline — dados locais';
+                refreshUI();
+            }
+        } catch(e) {
+            console.warn('Supabase indisponível:', e);
+            document.getElementById('statusBar').innerText = '📴 Modo offline — dados locais';
+            refreshUI();
+        }
+    }
 
-            if (clients && groups) {
-                // Transforma o formato "Gestão (X3)" para o formato "Painel HTML (X4)"
-                db = clients.map(c => {
-                    const g = groups.find(x => x.id === c.groupId);
-                    const gestor = g ? g.name.toUpperCase() : 'DESCONHECIDO';
-                    let groupName = "GRUPO B";
+    async function carregarDaNuvem() {
+        try {
+            var r1 = await sbClient.from('clients').select('*');
+            var r2 = await sbClient.from('groups').select('*');
+            var clients = r1.data || [];
+            var groups  = r2.data || [];
+
+            if (clients.length > 0) {
+                db = clients.map(function(c) {
+                    var g = groups.find(function(x){ return x.id === c.groupId; });
+                    var gestor = g ? g.name.toUpperCase() : 'DESCONHECIDO';
+                    var groupName = "GRUPO B";
                     if (gestor.includes('LELLYS')) groupName = "GRUPO ESPECIAL";
-                    else if (['JAILTON','RICARDO','MANGU','MATHEUS TUK'].includes(gestor)) groupName = "GRUPO A";
-                    
+                    else if (["JAILTON","RICARDO","MANGU","MATHEUS TUK"].indexOf(gestor) >= 0) groupName = "GRUPO A";
                     return {
                         id: c.id,
                         name: c.name,
-                        val: c.currentCapital || c.initialCapital,
-                        perc: g ? g.interestRate : 8,
+                        val: c.currentCapital || c.initialCapital || 0,
+                        perc: g ? (g.interestRate || 8) : 8,
                         comisPerc: 0,
-                        dateLoan: new Date(c.createdAt).toISOString().split('T')[0],
+                        dateLoan: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '',
                         datePay: c.firstDueDate ? new Date(c.firstDueDate).toISOString().split('T')[0] : '',
                         group: groupName,
                         sub: gestor,
-                        status: c.status === 'ACTIVE' ? 'PENDENTE' : 'PAGO'
+                        status: c.status === 'ACTIVE' ? 'PENDENTE' : (c.status === 'PAID' ? 'PAGO' : 'PENDENTE')
                     };
                 });
+                localStorage.setItem('credplus_v1_sync', JSON.stringify(db));
+                document.getElementById('statusBar').innerText = '✅ Sincronizado com a nuvem — ' + db.length + ' clientes';
+            } else {
+                document.getElementById('statusBar').innerText = '✅ Conectado — Sem clientes cadastrados ainda';
             }
-            refreshUI();
-        } catch (e) {
-            console.error(e);
-            refreshUI();
+        } catch(e) {
+            console.warn('Erro ao carregar da nuvem:', e);
+            document.getElementById('statusBar').innerText = '⚠️ Erro na sincronização — usando dados locais';
         }
+        refreshUI();
     }
-    carregarDadosDaNuvem(); 
 
     async function salvarNaNuvem(item) {
-        // Como o X4 agora é apenas um Dashboard Conferência puro, a inserção manual dele no 
-        // banco X3 envolveria criar um client com a estrutura do X3. Vamos enviar de volta formatado.
-        const supabaseUrl = 'https://acvujcnfkeptjclnzyqq.supabase.co';
-        const supabaseKey = 'sb_publishable_ayU1lBrhxBemuQcATCR8Zg_QlipJZxD';
-        
-        let groupId = "default_g";
-        const { data: gps } = await supabase.from('groups').select('*');
-        if (gps) {
-             const gMatch = gps.find(x => x.name.toUpperCase() === item.sub);
-             if (gMatch) groupId = gMatch.id;
+        if (!sbClient) return;
+        try {
+            var groupId = null;
+            var r = await sbClient.from('groups').select('*');
+            if (r.data) {
+                var match = r.data.find(function(x){ return x.name.toUpperCase() === item.sub; });
+                if (match) groupId = match.id;
+            }
+            await sbClient.from('clients').upsert([{
+                id: String(item.id),
+                name: item.name,
+                currentCapital: item.val,
+                initialCapital: item.val,
+                status: item.status === 'PAGO' ? 'PAID' : 'ACTIVE',
+                groupId: groupId,
+                createdAt: item.dateLoan ? new Date(item.dateLoan).getTime() : Date.now()
+            }]);
+        } catch(e) {
+            console.warn('Erro ao salvar na nuvem:', e);
         }
-
-        await supabase.from('clients').upsert([{
-             id: String(item.id),
-             name: item.name,
-             currentCapital: item.val,
-             initialCapital: item.val,
-             status: item.status === 'PAGO' ? 'PAID' : 'ACTIVE',
-             groupId: groupId,
-             createdAt: new Date(item.dateLoan).getTime() || Date.now()
-        }]);
     }
-    // =================================
 
-    const clrs = {
-        "LELLYS FLÁVIO": "#10b981", "JAILTON": "#ffffff", "RICARDO": "#f97316", "MANGU": "#1d4ed8",
-        "MATHEUS TUK": "#a855f7", "SANNY": "#ec4899", "MARCOS": "#0ea5e9", "JEAN": "#fbbf24"
-    };
-
+    // ============================================================
+    // FUNÇÕES DA UI — sempre funcionam, com ou sem nuvem
+    // ============================================================
     function currency(v) {
         return "R$ " + (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function switchSys(v) {
-        view = v; sub = 'TODOS';
-        document.querySelectorAll('.nav-link').forEach(l => l.innerText.includes(v) ? l.classList.add('active') : l.classList.remove('active'));
-        document.querySelectorAll('.sub-nav').forEach(n => n.style.display = 'none');
-        if(v === 'GRUPO ESPECIAL') document.getElementById('subDashE').style.display = 'flex';
-        if(v === 'GRUPO A') document.getElementById('subDashA').style.display = 'flex';
-        if(v === 'GRUPO B') document.getElementById('subDashB').style.display = 'flex';
+        currentView = v;
+        currentSub  = 'TODOS';
+        document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
+        var el = document.getElementById('nav-' + v);
+        if (el) el.classList.add('active');
+        document.querySelectorAll('.sub-nav').forEach(function(n) { n.style.display = 'none'; });
+        if (v === 'GRUPO ESPECIAL') document.getElementById('subDashE').style.display = 'flex';
+        if (v === 'GRUPO A')        document.getElementById('subDashA').style.display = 'flex';
+        if (v === 'GRUPO B')        document.getElementById('subDashB').style.display = 'flex';
         refreshUI();
     }
 
-    function setSub(gp, s) { 
-        sub = s;
-        const sel = gp === 'E' ? '#subDashE .sub-btn' : (gp === 'A' ? '#subDashA .sub-btn' : '#subDashB .sub-btn');
-        document.querySelectorAll(sel).forEach(b => {
-            const bTxt = b.innerText.toUpperCase();
-            const isMatch = s === 'TODOS' ? bTxt.includes('GERAL') : bTxt === s.toUpperCase();
-            if(isMatch) b.classList.add('active'); else b.classList.remove('active');
+    function setSub(gp, s) {
+        currentSub = s;
+        var sel = gp === 'E' ? '#subDashE .sub-btn' : (gp === 'A' ? '#subDashA .sub-btn' : '#subDashB .sub-btn');
+        document.querySelectorAll(sel).forEach(function(b) {
+            var bTxt = b.innerText.toUpperCase();
+            var isMatch = s === 'TODOS' ? bTxt.includes('GERAL') : bTxt === s.toUpperCase();
+            if (isMatch) b.classList.add('active'); else b.classList.remove('active');
         });
         refreshUI();
     }
 
     function updTeam() {
-        const gp = document.getElementById('r-group').value;
-        const subSel = document.getElementById('r-sub');
+        var gp = document.getElementById('r-group').value;
+        var subSel = document.getElementById('r-sub');
         subSel.innerHTML = '';
-        const teams = { 
-            "GRUPO ESPECIAL": ["LELLYS FLÁVIO"], 
-            "GRUPO A": ["JAILTON", "RICARDO", "MANGU", "MATHEUS TUK"], 
-            "GRUPO B": ["SANNY", "MARCOS", "JEAN"] 
-        };
-        const list = teams[gp] || [];
-        list.forEach(t => subSel.add(new Option(t, t)));
-        document.getElementById('rowComis').style.display = gp === 'GRUPO B' ? 'grid' : 'none';
+        var list = EQUIPES[gp] || [];
+        list.forEach(function(t) { subSel.add(new Option(t, t)); });
+        document.getElementById('rowComis').style.display = (gp === 'GRUPO B') ? 'grid' : 'none';
     }
 
     function refreshUI() {
-        const qS = document.getElementById('srch').value.toUpperCase();
-        const tbody = document.getElementById('rows'); tbody.innerHTML = '';
-        let cT = 0, jT = 0, clT = 0, comT = 0;
-        const today = new Date(); today.setHours(0,0,0,0);
-        const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+        var qS = document.getElementById('srch').value.toUpperCase();
+        var tbody = document.getElementById('rows');
+        tbody.innerHTML = '';
+        var cT = 0, jT = 0, clT = 0, comT = 0;
+        var today    = new Date(); today.setHours(0,0,0,0);
+        var tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
 
-        const isB = ['SANNY', 'MARCOS', 'JEAN'].includes(sub);
+        var isB = ['SANNY', 'MARCOS', 'JEAN'].indexOf(currentSub) >= 0;
         document.getElementById('cardComissao').style.display = isB ? 'block' : 'none';
 
-        // FILTRO DE SEGURANÇA MÁXIMA
-        const filtered = db.filter(c => {
-            const baseView = view.toUpperCase();
-            const itemGroup = (c.group || "").toUpperCase();
-            const itemSub = (c.sub || "").toUpperCase();
-            const filterSub = sub.toUpperCase();
-
-            const vMatch = (baseView === 'ADM' || itemGroup === baseView);
-            const sMatch = (filterSub === 'TODOS' || itemSub === filterSub);
-            const nMatch = (c.name || "").toUpperCase().includes(qS);
-
+        var filtered = db.filter(function(c) {
+            var vMatch = (currentView === 'ADM' || (c.group || '').toUpperCase() === currentView);
+            var sMatch = (currentSub === 'TODOS' || (c.sub || '').toUpperCase() === currentSub);
+            var nMatch = (c.name || '').toUpperCase().includes(qS);
             return vMatch && sMatch && nMatch;
         });
 
-        filtered.forEach(c => {
-            const pD = new Date(c.datePay); pD.setHours(0,0,0,0);
-            const valJ = (c.val || 0) * (((c.perc || 8)) / 100);
-            
-            let bC = "", bText = "";
-            if (c.status === "PAGO") { bC = "bg-green"; bText = "PAGO"; }
-            else if (pD.getTime() === today.getTime()) { bC = "bg-blue"; bText = "HOJE"; }
-            else if (pD.getTime() === tomorrow.getTime()) { bC = "bg-yellow"; bText = "AMANHÃ"; }
-            else if (pD < today) { bC = "bg-red"; bText = "VENCIDO"; }
-            else { bC = "bg-blue"; bText = "EM DIA"; }
+        filtered.forEach(function(c) {
+            var pD = new Date(c.datePay); pD.setHours(0,0,0,0);
+            var valJ = (c.val || 0) * ((c.perc || 8) / 100);
 
-            if(c.status !== "PAGO") { 
-                cT += (c.val || 0); 
-                jT += valJ; 
-                if(isB) comT += (valJ * ((c.comisPerc || 0) / 100));
+            var bC = '', bText = '';
+            if (c.status === 'PAGO')                            { bC = 'bg-green';  bText = 'PAGO'; }
+            else if (isNaN(pD))                                  { bC = 'bg-blue';   bText = 'SEM DATA'; }
+            else if (pD.getTime() === today.getTime())           { bC = 'bg-blue';   bText = 'HOJE'; }
+            else if (pD.getTime() === tomorrow.getTime())        { bC = 'bg-yellow'; bText = 'AMANHÃ'; }
+            else if (pD < today)                                 { bC = 'bg-red';    bText = 'VENCIDO'; }
+            else                                                 { bC = 'bg-blue';   bText = 'EM DIA'; }
+
+            if (c.status !== 'PAGO') {
+                cT += (c.val || 0);
+                jT += valJ;
+                if (isB) comT += (valJ * ((c.comisPerc || 0) / 100));
             }
             clT++;
 
-            const color = clrs[c.sub] || "#94a3b8";
-            let gT = view === 'ADM' ? `<span class="label-gp" style="color:${color}">${c.group === 'GRUPO ESPECIAL' ? 'E' : (c.group === 'GRUPO A' ? 'A' : 'B')}</span>` : "";
+            var color = clrs[c.sub] || '#94a3b8';
+            var label = c.group === 'GRUPO ESPECIAL' ? 'E' : (c.group === 'GRUPO A' ? 'A' : 'B');
+            var gT = (currentView === 'ADM') ? '<span class="label-gp" style="color:' + color + '">' + label + '</span>' : '';
 
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td style="border-left-color: ${color}">
-                    <div style="display:flex; align-items:center;">
-                        ${gT}
-                        <div><div style="font-weight:700; color:${color}; font-size:1.15rem;">${c.name}</div><div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">GEST: ${c.sub} (${c.perc || 8}%) | EMP: ${c.dateLoan.split('-').reverse().join('/')}</div></div>
-                    </div>
-                </td>
-                <td style="font-weight:700">${currency(c.val)}</td>
-                <td style="color:${color}; font-weight:800">${currency(valJ)}</td>
-                <td>${c.datePay.split('-').reverse().join('/')}</td>
-                <td><span class="st-badge ${bC}">${bText}</span></td>
-                <td><div style="display:flex; gap:10px;">
-                    <button class="btn-icon" onclick="markPaid('${c.id}')"><i data-lucide="check" size="20" color="${c.status==='PAGO'?'#22c55e':'#94a3b8'}"></i></button>
-                    <button class="btn-icon" onclick="showForm('${c.id}')"><i data-lucide="edit-2" size="20"></i></button>
-                </div></td>
-            `;
+            var dateLoanFmt = c.dateLoan ? c.dateLoan.split('-').reverse().join('/') : '—';
+            var datePayFmt  = c.datePay  ? c.datePay.split('-').reverse().join('/')  : '—';
+            var idStr = String(c.id).replace(/'/g, '');
+
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td style="border-left-color: ' + color + '">' +
+                    '<div style="display:flex; align-items:center;">' + gT +
+                        '<div>' +
+                            '<div style="font-weight:700; color:' + color + '; font-size:1.15rem;">' + c.name + '</div>' +
+                            '<div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">GEST: ' + c.sub + ' (' + (c.perc || 8) + '%) | EMP: ' + dateLoanFmt + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</td>' +
+                '<td style="font-weight:700">' + currency(c.val) + '</td>' +
+                '<td style="color:' + color + '; font-weight:800">' + currency(valJ) + '</td>' +
+                '<td>' + datePayFmt + '</td>' +
+                '<td><span class="st-badge ' + bC + '">' + bText + '</span></td>' +
+                '<td><div style="display:flex; gap:10px;">' +
+                    '<button class="btn-icon" onclick="markPaid(\'' + idStr + '\')" title="Marcar Pago"><i data-lucide="check" size="20" color="' + (c.status === 'PAGO' ? '#22c55e' : '#94a3b8') + '"></i></button>' +
+                    '<button class="btn-icon" onclick="showForm(\'' + idStr + '\')" title="Editar"><i data-lucide="edit-2" size="20"></i></button>' +
+                '</div></td>';
             tbody.appendChild(tr);
         });
 
-        document.getElementById('tot-cap').innerText = currency(cT);
-        document.getElementById('tot-jur').innerText = currency(jT);
-        document.getElementById('tot-cli').innerText = clT;
+        document.getElementById('tot-cap').innerText  = currency(cT);
+        document.getElementById('tot-jur').innerText  = currency(jT);
+        document.getElementById('tot-cli').innerText  = clT;
         document.getElementById('tot-comis').innerText = currency(comT);
         lucide.createIcons();
     }
 
-    function showForm(id = null) {
-        if(id) {
-            const c = db.find(x => x.id == id);
-            document.getElementById('eID').value = c.id;
-            document.getElementById('r-name').value = c.name;
-            document.getElementById('r-val').value = c.val;
-            document.getElementById('r-perc').value = c.perc || 8;
+    function showForm(id) {
+        if (id) {
+            var c = db.find(function(x) { return String(x.id) === String(id); });
+            if (!c) return;
+            document.getElementById('eID').value          = c.id;
+            document.getElementById('r-name').value       = c.name;
+            document.getElementById('r-val').value        = c.val;
+            document.getElementById('r-perc').value       = c.perc || 8;
             document.getElementById('r-comis-perc').value = c.comisPerc || 0;
-            document.getElementById('r-date-loan').value = c.dateLoan;
-            document.getElementById('r-date-pay').value = c.datePay;
-            document.getElementById('r-group').value = c.group;
+            document.getElementById('r-date-loan').value  = c.dateLoan;
+            document.getElementById('r-date-pay').value   = c.datePay;
+            document.getElementById('r-group').value      = c.group;
             updTeam();
             document.getElementById('r-sub').value = c.sub;
-            document.getElementById('modalTitle').innerText = "Editar Cadastro";
+            document.getElementById('modalTitle').innerText = 'Editar Cadastro';
         } else {
-            document.getElementById('eID').value = "";
-            document.getElementById('r-name').value = "";
-            document.getElementById('r-val').value = "";
-            document.getElementById('r-perc').value = 8;
+            document.getElementById('eID').value          = '';
+            document.getElementById('r-name').value       = '';
+            document.getElementById('r-val').value        = '';
+            document.getElementById('r-perc').value       = 8;
             document.getElementById('r-comis-perc').value = 0;
-            document.getElementById('r-date-loan').value = "";
-            document.getElementById('r-date-pay').value = "";
-            document.getElementById('r-group').value = (view === 'ADM' || view === 'Visão Geral') ? 'GRUPO ESPECIAL' : view;
+            document.getElementById('r-date-loan').value  = '';
+            document.getElementById('r-date-pay').value   = '';
+            document.getElementById('r-group').value      = (currentView === 'ADM') ? 'GRUPO ESPECIAL' : currentView;
             updTeam();
-            document.getElementById('modalTitle').innerText = "Novo Contrato";
+            document.getElementById('modalTitle').innerText = 'Novo Contrato';
         }
         document.getElementById('formModal').style.display = 'flex';
     }
@@ -394,37 +449,49 @@
 
     function handleSave(e) {
         e.preventDefault();
-        const id = document.getElementById('eID').value;
-        const d = { 
-            name: document.getElementById('r-name').value.toUpperCase(), 
-            val: parseFloat(document.getElementById('r-val').value) || 0, 
-            perc: parseFloat(document.getElementById('r-perc').value) || 0, 
-            comisPerc: parseFloat(document.getElementById('r-comis-perc').value || 0), 
-            dateLoan: document.getElementById('r-date-loan').value, 
-            datePay: document.getElementById('r-date-pay').value, 
-            group: document.getElementById('r-group').value, 
-            sub: document.getElementById('r-sub').value, 
-            status: "PENDENTE" 
+        var id = document.getElementById('eID').value;
+        var d = {
+            name:      document.getElementById('r-name').value.toUpperCase(),
+            val:       parseFloat(document.getElementById('r-val').value) || 0,
+            perc:      parseFloat(document.getElementById('r-perc').value) || 0,
+            comisPerc: parseFloat(document.getElementById('r-comis-perc').value) || 0,
+            dateLoan:  document.getElementById('r-date-loan').value,
+            datePay:   document.getElementById('r-date-pay').value,
+            group:     document.getElementById('r-group').value,
+            sub:       document.getElementById('r-sub').value,
+            status:    'PENDENTE'
         };
-        const newItem = {id: id ? id : Date.now().toString(), ...d};
-        if(id) db = db.map(x => x.id == id ? newItem : x);
-        else db.push(newItem);
-        
+        var newItem = Object.assign({ id: id ? id : String(Date.now()) }, d);
+        if (id) {
+            db = db.map(function(x) { return String(x.id) === String(id) ? newItem : x; });
+        } else {
+            db.push(newItem);
+        }
         localStorage.setItem('credplus_v1_sync', JSON.stringify(db));
-        salvarNaNuvem(newItem); // Envia automático para o Supabase
-        
-        hideForm(); refreshUI();
-    }
-
-    async function markPaid(id) {
-        db = db.map(c => c.id == id ? {...c, status: c.status === "PAGO" ? "PENDENTE" : "PAGO"} : c);
-        const itemAtualizado = db.find(c => c.id == id);
-        localStorage.setItem('credplus_v1_sync', JSON.stringify(db));
-        await salvarNaNuvem(itemAtualizado);
+        salvarNaNuvem(newItem);
+        hideForm();
         refreshUI();
     }
 
-    refreshUI();
+    function markPaid(id) {
+        db = db.map(function(c) {
+            if (String(c.id) === String(id)) {
+                return Object.assign({}, c, { status: c.status === 'PAGO' ? 'PENDENTE' : 'PAGO' });
+            }
+            return c;
+        });
+        localStorage.setItem('credplus_v1_sync', JSON.stringify(db));
+        var updated = db.find(function(c) { return String(c.id) === String(id); });
+        if (updated) salvarNaNuvem(updated);
+        refreshUI();
+    }
+
+    // ============================================================
+    // INICIALIZAÇÃO: mostra UI local primeiro, depois sincroniza
+    // ============================================================
+    refreshUI();           // Renderiza imediatamente com dados locais
+    inicializarSupabase(); // Conecta ao Supabase em segundo plano
+
 </script>
 </body>
 </html>
