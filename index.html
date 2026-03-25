@@ -110,11 +110,20 @@
         <div class="sub-btn" onclick="setSub('A', 'MATHEUS TUK')">MATHEUS TUK</div>
     </div>
 
+    <!-- Banner de identidade do Grupo B -->
+    <div id="bannerB" style="display:none; margin-bottom: 1rem; padding: 1.2rem 1.8rem; border-radius: 20px; background: linear-gradient(135deg, rgba(236,72,153,0.12) 0%, rgba(14,165,233,0.12) 50%, rgba(251,191,36,0.12) 100%); border: 1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap: 2rem; flex-wrap:wrap;">
+        <div style="font-size:0.7rem; font-weight:900; text-transform:uppercase; color:#94a3b8; letter-spacing:2px;">GRUPO B — GESTORES:</div>
+        <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:8px;"><div style="width:10px;height:10px;border-radius:50%;background:#ec4899;"></div><span style="font-weight:800;font-size:0.8rem;color:#ec4899;">SANNY</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><div style="width:10px;height:10px;border-radius:50%;background:#0ea5e9;"></div><span style="font-weight:800;font-size:0.8rem;color:#0ea5e9;">MARCOS</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><div style="width:10px;height:10px;border-radius:50%;background:#fbbf24;"></div><span style="font-weight:800;font-size:0.8rem;color:#fbbf24;">JEAN</span></div>
+        </div>
+    </div>
     <div id="subDashB" class="sub-nav" style="display: none;">
-        <div class="sub-btn active" onclick="setSub('B', 'TODOS')">DASHBOARD GERAL B</div>
-        <div class="sub-btn" onclick="setSub('B', 'SANNY')">SANNY</div>
-        <div class="sub-btn" onclick="setSub('B', 'MARCOS')">MARCOS</div>
-        <div class="sub-btn" onclick="setSub('B', 'JEAN')">JEAN</div>
+        <div class="sub-btn active" onclick="setSub('B', 'TODOS')" style="color:#94a3b8;">DASHBOARD GERAL B</div>
+        <div class="sub-btn" onclick="setSub('B', 'SANNY')" style="color:#ec4899; font-weight:900;">● SANNY</div>
+        <div class="sub-btn" onclick="setSub('B', 'MARCOS')" style="color:#0ea5e9; font-weight:900;">● MARCOS</div>
+        <div class="sub-btn" onclick="setSub('B', 'JEAN')" style="color:#fbbf24; font-weight:900;">● JEAN</div>
     </div>
 
     <div class="stats-grid">
@@ -250,9 +259,24 @@
             if (clients.length > 0) {
                 db = clients.map(function(c) {
                     var g = groups.find(function(x){ return x.id === c.groupId; });
-                    var gestor = g ? g.name.toUpperCase() : 'DESCONHECIDO';
+                    var gestor = g ? g.name.toUpperCase().trim() : 'DESCONHECIDO';
+                    // Normaliza variações de nome possíveis do X3
+                    var MAPA_GESTORES = {
+                        'LELLYS':       'LELLYS FLÁVIO',
+                        'LELLYS FLAVIO':'LELLYS FLÁVIO',
+                        'LELLYS FLÁVIO':'LELLYS FLÁVIO',
+                        'JAILTON':      'JAILTON',
+                        'RICARDO':      'RICARDO',
+                        'MANGU':        'MANGU',
+                        'MATHEUS TUK':  'MATHEUS TUK',
+                        'MATHEUS':      'MATHEUS TUK',
+                        'SANNY':        'SANNY',
+                        'MARCOS':       'MARCOS',
+                        'JEAN':         'JEAN'
+                    };
+                    gestor = MAPA_GESTORES[gestor] || gestor;
                     var groupName = "GRUPO B";
-                    if (gestor.includes('LELLYS')) groupName = "GRUPO ESPECIAL";
+                    if (gestor === 'LELLYS FLÁVIO') groupName = "GRUPO ESPECIAL";
                     else if (["JAILTON","RICARDO","MANGU","MATHEUS TUK"].indexOf(gestor) >= 0) groupName = "GRUPO A";
                     return {
                         id: c.id,
@@ -316,6 +340,9 @@
         var el = document.getElementById('nav-' + v);
         if (el) el.classList.add('active');
         document.querySelectorAll('.sub-nav').forEach(function(n) { n.style.display = 'none'; });
+        // Banner Grupo B
+        var bannerB = document.getElementById('bannerB');
+        if (bannerB) bannerB.style.display = (v === 'GRUPO B') ? 'flex' : 'none';
         if (v === 'GRUPO ESPECIAL') document.getElementById('subDashE').style.display = 'flex';
         if (v === 'GRUPO A')        document.getElementById('subDashA').style.display = 'flex';
         if (v === 'GRUPO B')        document.getElementById('subDashB').style.display = 'flex';
