@@ -102,6 +102,16 @@
         <div class="sub-btn" id="sub-lel" onclick="setSub('E', 'LELLYS FLÁVIO')" style="color: var(--clr-leillys)">LELLYS FLÁVIO</div>
     </div>
 
+    <!-- Banner de identidade do Grupo A -->
+    <div id="bannerA" style="display:none; margin-bottom: 1rem; padding: 1.2rem 1.8rem; border-radius: 20px; background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(249,115,22,0.10) 33%, rgba(20,184,166,0.10) 66%, rgba(168,85,247,0.10) 100%); border: 1px solid rgba(255,255,255,0.1); align-items:center; gap: 2rem; flex-wrap:wrap;">
+        <div style="font-size:0.7rem; font-weight:900; text-transform:uppercase; color:#94a3b8; letter-spacing:2px;">GRUPO A — GESTORES:</div>
+        <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-top:8px;">
+            <div style="display:flex; align-items:center; gap:8px;"><div style="width:10px;height:10px;border-radius:50%;background:#ffffff; border:1px solid #666;"></div><span style="font-weight:800;font-size:0.8rem;color:#ffffff;">JAILTON</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><div style="width:10px;height:10px;border-radius:50%;background:#f97316;"></div><span style="font-weight:800;font-size:0.8rem;color:#f97316;">RICARDO</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><div style="width:10px;height:10px;border-radius:50%;background:#14b8a6;"></div><span style="font-weight:800;font-size:0.8rem;color:#14b8a6;">MANGU</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><div style="width:10px;height:10px;border-radius:50%;background:#a855f7;"></div><span style="font-weight:800;font-size:0.8rem;color:#a855f7;">MATHEUS TUK</span></div>
+        </div>
+    </div>
     <div id="subDashA" class="sub-nav" style="display: none;">
         <div class="sub-btn active" onclick="setSub('A', 'TODOS')" style="color:#94a3b8;">DASHBOARD GERAL A</div>
         <div class="sub-btn" onclick="setSub('A', 'JAILTON')"     style="color:#ffffff; font-weight:900;">&#9679; JAILTON</div>
@@ -355,6 +365,9 @@
         // Banner Grupo B
         var bannerB = document.getElementById('bannerB');
         if (bannerB) bannerB.style.display = (v === 'GRUPO B') ? 'flex' : 'none';
+        // Banner Grupo A
+        var bannerA = document.getElementById('bannerA');
+        if (bannerA) bannerA.style.display = (v === 'GRUPO A') ? 'flex' : 'none';
         if (v === 'GRUPO ESPECIAL') document.getElementById('subDashE').style.display = 'flex';
         if (v === 'GRUPO A')        document.getElementById('subDashA').style.display = 'flex';
         if (v === 'GRUPO B')        document.getElementById('subDashB').style.display = 'flex';
@@ -390,7 +403,27 @@
         var today    = new Date(); today.setHours(0,0,0,0);
         var tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
 
-        // Configuração do dashboard individual do Grupo B
+        // ===== Dashboard individual do Grupo A =====
+        var GESTORES_A = {
+            'JAILTON':     { cor: '#ffffff' },
+            'RICARDO':     { cor: '#f97316' },
+            'MANGU':       { cor: '#14b8a6' },
+            'MATHEUS TUK': { cor: '#a855f7' }
+        };
+        var gestorA = GESTORES_A[currentSub];
+
+        // Aplica borda colorida nos cards Capital e Juros quando gestor A selecionado
+        var cardCap = document.getElementById('tot-cap').parentElement;
+        var cardJur = document.getElementById('tot-jur').parentElement;
+        if (gestorA) {
+            cardCap.style.borderLeft = '4px solid ' + gestorA.cor;
+            cardJur.style.borderLeft = '4px solid ' + gestorA.cor;
+        } else {
+            cardCap.style.borderLeft = '';
+            cardJur.style.borderLeft = '';
+        }
+
+        // ===== Dashboard individual do Grupo B (INTOCADO) =====
         var GESTORES_B = {
             'SANNY':  { cor: '#ec4899', label: 'COMISSÃO DE SANNY' },
             'MARCOS': { cor: '#0ea5e9', label: 'COMISSÃO DE MARCOS' },
