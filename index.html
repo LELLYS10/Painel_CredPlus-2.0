@@ -103,11 +103,11 @@
     </div>
 
     <div id="subDashA" class="sub-nav" style="display: none;">
-        <div class="sub-btn active" onclick="setSub('A', 'TODOS')">DASHBOARD GERAL A</div>
-        <div class="sub-btn" onclick="setSub('A', 'JAILTON')">JAILTON</div>
-        <div class="sub-btn" onclick="setSub('A', 'RICARDO')">RICARDO</div>
-        <div class="sub-btn" onclick="setSub('A', 'MANGU')">MANGU</div>
-        <div class="sub-btn" onclick="setSub('A', 'MATHEUS TUK')">MATHEUS TUK</div>
+        <div class="sub-btn active" onclick="setSub('A', 'TODOS')" style="color:#94a3b8;">DASHBOARD GERAL A</div>
+        <div class="sub-btn" onclick="setSub('A', 'JAILTON')"     style="color:#ffffff; font-weight:900;">&#9679; JAILTON</div>
+        <div class="sub-btn" onclick="setSub('A', 'RICARDO')"     style="color:#f97316; font-weight:900;">&#9679; RICARDO</div>
+        <div class="sub-btn" onclick="setSub('A', 'MANGU')"       style="color:#1d4ed8; font-weight:900;">&#9679; MANGU</div>
+        <div class="sub-btn" onclick="setSub('A', 'MATHEUS TUK')" style="color:#a855f7; font-weight:900;">&#9679; MATHEUS TUK</div>
     </div>
 
     <!-- Banner de identidade do Grupo B -->
@@ -416,11 +416,11 @@
             cardCom.style.borderLeft = '';
         }
 
-        var isGrupoB = (currentView === 'GRUPO B');
+        var isGrupoAouB = (currentView === 'GRUPO B' || currentView === 'GRUPO A');
         var cardVenc    = document.getElementById('cardVencidos');
         var cardClients = document.getElementById('cardClientes');
 
-        if (isGrupoB) {
+        if (isGrupoAouB) {
             cardVenc.style.display    = 'block';
             cardClients.style.display = 'none';
         } else {
