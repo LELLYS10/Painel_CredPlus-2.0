@@ -127,13 +127,22 @@
     </div>
 
     <div class="stats-grid" id="statsGrid">
+        <!-- 1. CAPITAL EMPRESTADO -->
+        <div class="stat-card"><span class="stat-label">Capital Emprestado</span><div class="stat-value" id="tot-cap">R$ 0,00</div></div>
+        <!-- 2. JUROS A RECEBER -->
+        <div class="stat-card"><span class="stat-label">Juros a Receber</span><div class="stat-value" id="tot-jur" style="color: var(--accent)">R$ 0,00</div></div>
+        <!-- 3. VENCIDOS (só Grupo B) -->
+        <div class="stat-card" id="cardVencidos" style="display:none; border-left: 4px solid #ef4444;">
+            <span class="stat-label" style="color:#fca5a5;">&#9888; Vencidos</span>
+            <div class="stat-value" id="tot-venc" style="color:#ef4444;">R$ 0,00</div>
+        </div>
+        <!-- 3. CLIENTES ATIVOS (outros grupos) -->
+        <div class="stat-card" id="cardClientes"><span class="stat-label">Clientes Ativos</span><div class="stat-value" id="tot-cli">0</div></div>
+        <!-- 4. COMISSÃO (individual Grupo B) — sempre por último -->
         <div class="stat-card" id="cardComissao" style="display: none;">
-            <span class="stat-label" id="lblComissao">MINHA COMISSÃO</span>
+            <span class="stat-label" id="lblComissao">COMISSÃO</span>
             <div class="stat-value" id="tot-comis">R$ 0,00</div>
         </div>
-        <div class="stat-card"><span class="stat-label">Carteira em Aberto</span><div class="stat-value" id="tot-cap">R$ 0,00</div></div>
-        <div class="stat-card"><span class="stat-label">Juros à Receber Total</span><div class="stat-value" id="tot-jur" style="color: var(--accent)">R$ 0,00</div></div>
-        <div class="stat-card"><span class="stat-label">Clientes Ativos</span><div class="stat-value" id="tot-cli">0</div></div>
     </div>
 
     <div class="table-area">
@@ -401,6 +410,18 @@
             cardCom.style.borderLeft = '';
         }
 
+        var isGrupoB = (currentView === 'GRUPO B');
+        var cardVenc    = document.getElementById('cardVencidos');
+        var cardClients = document.getElementById('cardClientes');
+
+        if (isGrupoB) {
+            cardVenc.style.display    = 'block';
+            cardClients.style.display = 'none';
+        } else {
+            cardVenc.style.display    = 'none';
+            cardClients.style.display = 'block';
+        }
+
         var filtered = db.filter(function(c) {
             var vMatch = (currentView === 'ADM' || (c.group || '').toUpperCase() === currentView);
             var sMatch = (currentSub === 'TODOS' || (c.sub || '').toUpperCase() === currentSub);
@@ -408,6 +429,7 @@
             return vMatch && sMatch && nMatch;
         });
 
+        var vencT = 0;  // total de capital vencido
         filtered.forEach(function(c) {
             var pD = new Date(c.datePay); pD.setHours(0,0,0,0);
             var valJ = (c.val || 0) * ((c.perc || 8) / 100);
@@ -417,7 +439,7 @@
             else if (isNaN(pD))                                  { bC = 'bg-blue';   bText = 'SEM DATA'; }
             else if (pD.getTime() === today.getTime())           { bC = 'bg-blue';   bText = 'HOJE'; }
             else if (pD.getTime() === tomorrow.getTime())        { bC = 'bg-yellow'; bText = 'AMANHÃ'; }
-            else if (pD < today)                                 { bC = 'bg-red';    bText = 'VENCIDO'; }
+            else if (pD < today)                                 { bC = 'bg-red';    bText = 'VENCIDO'; vencT += (c.val || 0); }
             else                                                 { bC = 'bg-blue';   bText = 'EM DIA'; }
 
             if (c.status !== 'PAGO') {
@@ -460,6 +482,7 @@
         document.getElementById('tot-jur').innerText  = currency(jT);
         document.getElementById('tot-cli').innerText  = clT;
         document.getElementById('tot-comis').innerText = currency(comT);
+        document.getElementById('tot-venc').innerText  = currency(vencT);
         lucide.createIcons();
     }
 
