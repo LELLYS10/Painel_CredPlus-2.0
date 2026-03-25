@@ -347,8 +347,8 @@
                 <td>${c.datePay.split('-').reverse().join('/')}</td>
                 <td><span class="st-badge ${bC}">${bText}</span></td>
                 <td><div style="display:flex; gap:10px;">
-                    <button class="btn-icon" onclick="markPaid(${c.id})"><i data-lucide="check" size="20" color="${c.status==='PAGO'?'#22c55e':'#94a3b8'}"></i></button>
-                    <button class="btn-icon" onclick="showForm(${c.id})"><i data-lucide="edit-2" size="20"></i></button>
+                    <button class="btn-icon" onclick="markPaid('${c.id}')"><i data-lucide="check" size="20" color="${c.status==='PAGO'?'#22c55e':'#94a3b8'}"></i></button>
+                    <button class="btn-icon" onclick="showForm('${c.id}')"><i data-lucide="edit-2" size="20"></i></button>
                 </div></td>
             `;
             tbody.appendChild(tr);
@@ -406,7 +406,7 @@
             sub: document.getElementById('r-sub').value, 
             status: "PENDENTE" 
         };
-        const newItem = {id: id ? parseInt(id) : Date.now(), ...d};
+        const newItem = {id: id ? id : Date.now().toString(), ...d};
         if(id) db = db.map(x => x.id == id ? newItem : x);
         else db.push(newItem);
         
