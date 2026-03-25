@@ -172,10 +172,78 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     lucide.createIcons();
     let view = 'ADM', sub = 'TODOS';
-    let db = JSON.parse(localStorage.getItem('credplus_v1_sync')) || [];
+    let db = [];
+
+    // ====== INTEGRAÇÃO SUPABASE ======
+    const supabaseUrl = 'https://acvujcnfkeptjclnzyqq.supabase.co';
+    const supabaseKey = 'sb_publishable_ayU1lBrhxBemuQcATCR8Zg_QlipJZxD';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function carregarDadosDaNuvem() {
+        try {
+            // Puxa as tabelas OFICIAIS do seu App X3
+            const { data: clients } = await supabase.from('clients').select('*');
+            const { data: groups } = await supabase.from('groups').select('*');
+
+            if (clients && groups) {
+                // Transforma o formato "Gestão (X3)" para o formato "Painel HTML (X4)"
+                db = clients.map(c => {
+                    const g = groups.find(x => x.id === c.groupId);
+                    const gestor = g ? g.name.toUpperCase() : 'DESCONHECIDO';
+                    let groupName = "GRUPO B";
+                    if (gestor.includes('LELLYS')) groupName = "GRUPO ESPECIAL";
+                    else if (['JAILTON','RICARDO','MANGU','MATHEUS TUK'].includes(gestor)) groupName = "GRUPO A";
+                    
+                    return {
+                        id: c.id,
+                        name: c.name,
+                        val: c.currentCapital || c.initialCapital,
+                        perc: g ? g.interestRate : 8,
+                        comisPerc: 0,
+                        dateLoan: new Date(c.createdAt).toISOString().split('T')[0],
+                        datePay: c.firstDueDate ? new Date(c.firstDueDate).toISOString().split('T')[0] : '',
+                        group: groupName,
+                        sub: gestor,
+                        status: c.status === 'ACTIVE' ? 'PENDENTE' : 'PAGO'
+                    };
+                });
+            }
+            refreshUI();
+        } catch (e) {
+            console.error(e);
+            refreshUI();
+        }
+    }
+    carregarDadosDaNuvem(); 
+
+    async function salvarNaNuvem(item) {
+        // Como o X4 agora é apenas um Dashboard Conferência puro, a inserção manual dele no 
+        // banco X3 envolveria criar um client com a estrutura do X3. Vamos enviar de volta formatado.
+        const supabaseUrl = 'https://acvujcnfkeptjclnzyqq.supabase.co';
+        const supabaseKey = 'sb_publishable_ayU1lBrhxBemuQcATCR8Zg_QlipJZxD';
+        
+        let groupId = "default_g";
+        const { data: gps } = await supabase.from('groups').select('*');
+        if (gps) {
+             const gMatch = gps.find(x => x.name.toUpperCase() === item.sub);
+             if (gMatch) groupId = gMatch.id;
+        }
+
+        await supabase.from('clients').upsert([{
+             id: String(item.id),
+             name: item.name,
+             currentCapital: item.val,
+             initialCapital: item.val,
+             status: item.status === 'PAGO' ? 'PAID' : 'ACTIVE',
+             groupId: groupId,
+             createdAt: new Date(item.dateLoan).getTime() || Date.now()
+        }]);
+    }
+    // =================================
 
     const clrs = {
         "LELLYS FLÁVIO": "#10b981", "JAILTON": "#ffffff", "RICARDO": "#f97316", "MANGU": "#1d4ed8",
@@ -338,15 +406,21 @@
             sub: document.getElementById('r-sub').value, 
             status: "PENDENTE" 
         };
-        if(id) db = db.map(x => x.id == id ? {...x, ...d} : x);
-        else db.push({id: Date.now(), ...d});
+        const newItem = {id: id ? parseInt(id) : Date.now(), ...d};
+        if(id) db = db.map(x => x.id == id ? newItem : x);
+        else db.push(newItem);
+        
         localStorage.setItem('credplus_v1_sync', JSON.stringify(db));
+        salvarNaNuvem(newItem); // Envia automático para o Supabase
+        
         hideForm(); refreshUI();
     }
 
-    function markPaid(id) {
+    async function markPaid(id) {
         db = db.map(c => c.id == id ? {...c, status: c.status === "PAGO" ? "PENDENTE" : "PAGO"} : c);
+        const itemAtualizado = db.find(c => c.id == id);
         localStorage.setItem('credplus_v1_sync', JSON.stringify(db));
+        await salvarNaNuvem(itemAtualizado);
         refreshUI();
     }
 
