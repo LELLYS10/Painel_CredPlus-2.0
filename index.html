@@ -97,9 +97,15 @@
     </nav>
 
     <!-- Sub-Dashboards -->
+    <!-- Banner de identidade do Grupo Especial -->
+    <div id="bannerE" style="display:none; margin-bottom: 1rem; padding: 1.2rem 1.8rem; border-radius: 20px; background: linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(5,150,105,0.05) 100%); border: 1px solid rgba(16,185,129,0.3); align-items:center; gap: 2rem; flex-wrap:wrap; box-shadow: 0 0 20px rgba(16,185,129,0.1);">
+        <div style="font-size:0.7rem; font-weight:900; text-transform:uppercase; color:#10b981; letter-spacing:3px;">💎 GRUPO ESPECIAL — PREMIUM:</div>
+        <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#10b981;box-shadow: 0 0 10px #10b981;"></div><span style="font-weight:900;font-size:0.9rem;color:#10b981;">LELLYS FLÁVIO</span></div>
+        </div>
+    </div>
     <div id="subDashE" class="sub-nav" style="display: none;">
-        <div class="sub-btn active" onclick="setSub('E', 'TODOS')">DASHBOARD GERAL</div>
-        <div class="sub-btn" id="sub-lel" onclick="setSub('E', 'LELLYS FLÁVIO')" style="color: var(--clr-leillys)">LELLYS FLÁVIO</div>
+        <div class="sub-btn active" id="sub-lel" onclick="setSub('E', 'LELLYS FLÁVIO')" style="color: #10b981; font-weight: 900;">👑 LELLYS FLÁVIO</div>
     </div>
 
     <!-- Banner de identidade do Grupo A -->
@@ -368,6 +374,9 @@
         // Banner Grupo A
         var bannerA = document.getElementById('bannerA');
         if (bannerA) bannerA.style.display = (v === 'GRUPO A') ? 'flex' : 'none';
+        // Banner Grupo Especial
+        var bannerE = document.getElementById('bannerE');
+        if (bannerE) bannerE.style.display = (v === 'GRUPO ESPECIAL') ? 'flex' : 'none';
         if (v === 'GRUPO ESPECIAL') document.getElementById('subDashE').style.display = 'flex';
         if (v === 'GRUPO A')        document.getElementById('subDashA').style.display = 'flex';
         if (v === 'GRUPO B')        document.getElementById('subDashB').style.display = 'flex';
@@ -416,14 +425,23 @@
         var cardCap = document.getElementById('tot-cap').parentElement;
         var cardJur = document.getElementById('tot-jur').parentElement;
         var valCap  = document.getElementById('tot-cap');
+
         if (gestorA) {
             cardCap.style.borderLeft = '4px solid ' + gestorA.cor;
             cardJur.style.borderLeft = '4px solid ' + gestorA.cor;
             valCap.style.color = gestorA.cor;
+        } else if (currentSub === 'LELLYS FLÁVIO') {
+            // Estilo Premium Verde Esmeralda para Lellys
+            var verdePremium = '#10b981';
+            cardCap.style.borderLeft = '4px solid ' + verdePremium;
+            cardJur.style.borderLeft = '4px solid ' + verdePremium;
+            valCap.style.color = verdePremium;
+            cardCap.style.boxShadow = '0 0 15px rgba(16,185,129,0.1)';
         } else {
             cardCap.style.borderLeft = '';
             cardJur.style.borderLeft = '';
             valCap.style.color = '';
+            cardCap.style.boxShadow = '';
         }
 
         // ===== Dashboard individual do Grupo B (INTOCADO) =====
