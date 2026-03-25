@@ -415,12 +415,15 @@
         // Aplica borda colorida nos cards Capital e Juros quando gestor A selecionado
         var cardCap = document.getElementById('tot-cap').parentElement;
         var cardJur = document.getElementById('tot-jur').parentElement;
+        var valCap  = document.getElementById('tot-cap');
         if (gestorA) {
             cardCap.style.borderLeft = '4px solid ' + gestorA.cor;
             cardJur.style.borderLeft = '4px solid ' + gestorA.cor;
+            valCap.style.color = gestorA.cor;
         } else {
             cardCap.style.borderLeft = '';
             cardJur.style.borderLeft = '';
+            valCap.style.color = '';
         }
 
         // ===== Dashboard individual do Grupo B (INTOCADO) =====
