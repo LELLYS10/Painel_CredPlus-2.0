@@ -366,7 +366,8 @@
         var sel = gp === 'E' ? '#subDashE .sub-btn' : (gp === 'A' ? '#subDashA .sub-btn' : '#subDashB .sub-btn');
         document.querySelectorAll(sel).forEach(function(b) {
             var bTxt = b.innerText.toUpperCase();
-            var isMatch = s === 'TODOS' ? bTxt.includes('GERAL') : bTxt === s.toUpperCase();
+            // Usa includes para suportar o símbolo ● antes do nome
+            var isMatch = s === 'TODOS' ? bTxt.includes('GERAL') : bTxt.includes(s.toUpperCase());
             if (isMatch) b.classList.add('active'); else b.classList.remove('active');
         });
         refreshUI();
