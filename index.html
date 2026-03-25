@@ -405,6 +405,12 @@
             cardCom.style.borderLeft = '4px solid ' + gestorAtivo.cor;
             lblCom.innerText = gestorAtivo.label;
             valCom.style.color = gestorAtivo.cor;
+        } else if (currentView === 'GRUPO B') {
+            // Geral B: mostra comissão total de todos, sem cor individual
+            cardCom.style.display = 'block';
+            cardCom.style.borderLeft = '4px solid #94a3b8';
+            lblCom.innerText = 'COMISSÃO TOTAL (B)';
+            valCom.style.color = '#94a3b8';
         } else {
             cardCom.style.display = 'none';
             cardCom.style.borderLeft = '';
